@@ -15,13 +15,15 @@ def fetch_news(category, language):
     }
     response = requests.get(url, params = params)
     data = response.json()
-    return data['results']
-
-
-articles = fetch_news("business", "en")
-
-for a in articles:
-    print(a['title'])
-    print(a['description'])
-    print(a['link'])
-    print("-"*50)
+    final_data =[]
+    for article in data['results']:
+        news_item = {
+            'title': article.get('title'),
+            'description': article.get('description'),
+            'link': article.get('link'),
+            'image': article.get('image_url'),
+            'published at': article.get('pubDate'),
+            'source': article.get('source_name')
+        }
+        final_data.append(news_item)
+    return final_data
