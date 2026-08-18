@@ -22,7 +22,7 @@ def fetch_news(category, language):
             'description': article.get('description'),
             'link': article.get('link'),
             'image': article.get('image_url'),
-            'published at': article.get('pubDate'),
+            'published_at': article.get('pubDate'),
             'source': article.get('source_name')
         }
         final_data.append(news_item)

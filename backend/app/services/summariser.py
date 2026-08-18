@@ -17,7 +17,7 @@ def analyze_article(article_text, audience):
     prompt = f"""
     You are a news understanding assistant.
 
-    Analyze the following news article for a {audience}. The analysis should be on the basis of the audience ONLY!
+    Analyze the following news article for the following level: {audience}. The analysis should be on the basis of the audience ONLY!
 
     the fields of how it affects me should strictly limit to the scope the audience level. You can interpret the implications, 
     but don't invent facts or make unsupported claims.
