@@ -1,14 +1,19 @@
 import trafilatura
 
-def extract_article(url: str) -> str:
+import trafilatura
+
+
+def extract_article(url: str) -> str | None:
     downloaded = trafilatura.fetch_url(url)
+
     if downloaded is None:
-        return "Failed to download the article."
-    
+        return None
+
     extracted = trafilatura.extract(downloaded)
+
     if extracted is None:
-        return "Failed to extract the article content."
-    
+        return None
+
     return extracted
 
 if __name__  == "__main__":
