@@ -39,7 +39,7 @@ def analyze_article(article_text, audience):
     """
 
     response = client.chat.completions.create(
-        model="inclusionai/ling-3.0-tiny:free",
+        model="inclusionai/ling-3.0-flash:free",
         messages=[
             {
                 "role": "user",
