@@ -77,9 +77,11 @@ def summarize_url(request: URLSummaryRequest):
             return {"error": "Could not extract article"}
         summary = analyze_article(article_text, user_preferences['explanation_level'])
         return summary
-
 @app.post("/ask-question")
 def ask_question(request: AskQuestionRequest):
+
+    print("QUESTION RECEIVED:")
+    print(request.question)
 
     article_text = extract_article(request.url)
 
@@ -89,33 +91,48 @@ def ask_question(request: AskQuestionRequest):
         }
 
     prompt = f"""
-    You are Newsly, an AI news understanding assistant.
+You are Newsly, a helpful AI news assistant.
 
-    Answer the user's question based ONLY on the
-    information contained in the article below.
+The user is reading the article below and has asked a
+question about it.
 
-    The answer should be appropriate for:
-    {request.audience.value}
+Your job is to answer the question clearly and naturally.
 
-    Do not invent facts.
-    Do not make unsupported claims.
-    If the article does not contain enough information
-    to answer the question, say that clearly.
+IMPORTANT RULES:
 
-    User's question:
-    {request.question}
+1. Answer the user's question directly.
+2. Use ONLY information contained in the article.
+3. Do not invent facts.
+4. Do not make unsupported claims.
+5. If the article does not contain enough information,
+   say that clearly.
+6. Adapt your explanation to the requested audience.
+7. Do NOT output safety classifications.
+8. Do NOT output labels such as "User Safety", "safe",
+   "unsafe", or similar classifications.
+9. Just answer the user's question conversationally.
 
-    Article:
-    {article_text}
+AUDIENCE:
+{request.audience.value}
 
-    Give a clear, conversational answer.
-    """
+USER QUESTION:
+{request.question}
+
+ARTICLE:
+{article_text}
+
+Now answer the user's question.
+"""
 
     from app.services.summariser import client
 
     response = client.chat.completions.create(
         model="openrouter/free",
         messages=[
+            {
+                "role": "system",
+                "content": "You are Newsly, a helpful news understanding assistant. Answer the user directly."
+            },
             {
                 "role": "user",
                 "content": prompt
@@ -125,9 +142,13 @@ def ask_question(request: AskQuestionRequest):
 
     answer = response.choices[0].message.content
 
+    print("AI ANSWER:")
+    print(answer)
+
     return {
         "answer": answer
     }
+
 @app.post("/audience_level")
 def audience(request: AudienceLevel):
     return {"audience": request.value}
