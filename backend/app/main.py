@@ -1,7 +1,7 @@
 import datetime
 from fastapi import FastAPI
 from app.services.fetch_news import fetch_news
-from app.services.summariser import analyze_article, summarize_article
+from app.services.summariser import analyze_article, summarize_article, ask_question
 from app.services.article_extractor import extract_article
 from pydantic import BaseModel
 from enum import Enum
@@ -44,6 +44,11 @@ class UserPreferences(BaseModel):
     explanation_level: AudienceLevel
     genres: list[str]
 
+class AskQuestionRequest(BaseModel):
+    url: str
+    question: str
+    audience: AudienceLevel
+
 user_preferences = None
 
 @app.get("/news", response_model=list[Article])
@@ -73,6 +78,24 @@ def summarize_url(request: URLSummaryRequest):
             return {"error": "Could not extract article"}
         summary = analyze_article(article_text, user_preferences['explanation_level'])
         return summary
+
+@app.post("/ask-question")
+def ask_question_endpoint(request: AskQuestionRequest):
+
+    article_text = extract_article(request.url)
+
+    if article_text is None:
+        return {"error": "Could not extract article"}
+
+    answer = ask_question(
+        article_text,
+        request.question,
+        request.audience.value
+    )
+
+    return {
+        "answer": answer
+    }
 
 @app.post("/audience_level")
 def audience(request: AudienceLevel):

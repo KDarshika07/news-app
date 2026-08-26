@@ -75,6 +75,42 @@ def summarize_article(article_text, audience):
     )
     return response.choices[0].message.content
 
+def ask_question(article_text, question, audience):
+
+    prompt = f"""
+    You are Newsly, a news understanding assistant.
+
+    Answer the user's question about the news article below.
+
+    Audience level: {audience}
+
+    Rules:
+    - Answer ONLY using information contained in the article.
+    - If the article does not contain enough information to answer,
+      clearly say that the article does not provide enough information.
+    - Do not invent facts.
+    - Explain the answer according to the audience level.
+    - Be conversational and clear.
+    - Keep the answer reasonably concise.
+
+    Article:
+    {article_text}
+
+    User's question:
+    {question}
+    """
+
+    response = client.chat.completions.create(
+        model="openrouter/free",
+        messages=[
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ]
+    )
+
+    return response.choices[0].message.content
 
 if __name__ == "__main__":
     result = analyze_article(
