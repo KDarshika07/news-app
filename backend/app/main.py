@@ -69,15 +69,25 @@ def get_news(language: str):
 
 @app.post("/summarize-url")
 def summarize_url(request: URLSummaryRequest):
+
     if user_preferences is None:
-        return []
-    else:
-        article_text = extract_article(request.url)
-        if article_text is None:
-            return {"error": "Could not extract article"}
-        summary = analyze_article(article_text, user_preferences['explanation_level'])
-        return summary
-@app.post("/ask-question")
+        return {
+            "error": "User preferences not set"
+        }
+
+    article_text = extract_article(request.url)
+
+    if not article_text:
+        return {
+            "error": "Could not extract article"
+        }
+
+    summary = analyze_article(
+        article_text,
+        user_preferences["explanation_level"]
+    )
+
+    return summary
 def ask_question(request: AskQuestionRequest):
 
     print("QUESTION RECEIVED:")
