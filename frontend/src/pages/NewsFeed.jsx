@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 function NewsFeed({
   onArticleClick,
@@ -6,62 +6,9 @@ function NewsFeed({
   onPreferences,
 }) {
   const [selectedCategory, setSelectedCategory] = useState("For You");
-
-  const articles = [
-    {
-      category: "TECHNOLOGY",
-      title: "AI is changing the way people work. Here's what comes next.",
-      description:
-        "Artificial intelligence is moving beyond chatbots and becoming part of everyday work, from coding to research and design.",
-      source: "Reuters",
-      time: "2 hours ago",
-      emoji: "🤖",
-    },
-    {
-      category: "WORLD",
-      title: "A major shift in global trade is underway.",
-      description:
-        "Countries are rethinking how they trade with one another as businesses adapt to a changing global economy.",
-      source: "BBC",
-      time: "4 hours ago",
-      emoji: "🌍",
-    },
-    {
-      category: "SCIENCE",
-      title: "Scientists discover something fascinating about our planet.",
-      description:
-        "A new study is giving researchers a better understanding of how our planet is changing.",
-      source: "National Geographic",
-      time: "6 hours ago",
-      emoji: "🔬",
-    },
-    {
-      category: "BUSINESS",
-      title: "Markets are adapting to a rapidly changing economy.",
-      description:
-        "Businesses around the world are adjusting their strategies as economic conditions continue to evolve.",
-      source: "Bloomberg",
-      time: "8 hours ago",
-      emoji: "📈",
-    },
-    {
-      category: "POLITICS",
-      title: "Governments face new challenges this week.",
-      description:
-        "Political leaders are responding to developments that could shape policy and international relations.",
-      source: "The Guardian",
-      time: "10 hours ago",
-      emoji: "🏛️",
-    },
-  ];
-
-  const filteredArticles =
-    selectedCategory === "For You"
-      ? articles
-      : articles.filter(
-          (article) =>
-            article.category === selectedCategory.toUpperCase()
-        );
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const categories = [
     "For You",
@@ -71,6 +18,64 @@ function NewsFeed({
     "Science",
     "Politics",
   ];
+
+  useEffect(() => {
+    const fetchArticles = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        // const response = await fetch(
+        //   "http://127.0.0.1:8000/news?language=en"
+        // );
+        const API_URL = import.meta.env.VITE_API_URL;
+        const response = await fetch(
+          `${API_URL}/news?language=en`
+        );
+
+        // if (!response.ok) {
+        //   throw new Error("Failed to fetch news");
+        // }
+        if (!response.ok) {
+            const errorText = await response.text();
+          
+            console.error("Backend response:", response.status, errorText);
+          
+            throw new Error(
+              `Failed to fetch news: ${response.status}`
+            );
+          }
+
+        const data = await response.json();
+
+        const formattedArticles = data.map((article) => ({
+          ...article,
+          category: "NEWS",
+          emoji: "📰",
+          time: article.published_at
+            ? new Date(article.published_at).toLocaleString()
+            : "Recently",
+        }));
+
+        setArticles(formattedArticles);
+      } catch (error) {
+        console.error("Error fetching news:", error);
+        setError("Unable to load news right now.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchArticles();
+  }, []);
+
+  const filteredArticles =
+    selectedCategory === "For You"
+      ? articles
+      : articles.filter(
+          (article) =>
+            article.category === selectedCategory.toUpperCase()
+        );
 
   return (
     <div className="news-feed">
@@ -151,7 +156,35 @@ function NewsFeed({
 
         <div className="article-grid">
 
-          {filteredArticles.length > 0 ? (
+          {loading ? (
+
+            <div className="no-articles">
+              <span>📰</span>
+
+              <h3>
+                Loading your news...
+              </h3>
+
+              <p>
+                Finding stories for you ✨
+              </p>
+            </div>
+
+          ) : error ? (
+
+            <div className="no-articles">
+              <span>😕</span>
+
+              <h3>
+                Something went wrong
+              </h3>
+
+              <p>
+                {error}
+              </p>
+            </div>
+
+          ) : filteredArticles.length > 0 ? (
 
             filteredArticles.map((article, index) => (
 
@@ -161,11 +194,18 @@ function NewsFeed({
                     ? "article-card featured"
                     : "article-card"
                 }
-                key={article.title}
+                key={article.link || article.title}
               >
 
                 <div className="article-image">
-                  <span>{article.emoji}</span>
+                  {article.image ? (
+                    <img
+                      src={article.image}
+                      alt=""
+                    />
+                  ) : (
+                    <span>{article.emoji}</span>
+                  )}
                 </div>
 
                 <div className="article-content">
@@ -177,7 +217,8 @@ function NewsFeed({
                   <h3>{article.title}</h3>
 
                   <p className="article-description">
-                    {article.description}
+                    {article.description ||
+                      "No description available for this story."}
                   </p>
 
                   <div className="article-footer">

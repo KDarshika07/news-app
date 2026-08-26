@@ -7,30 +7,27 @@ function Explanation({
 }) {
   const [question, setQuestion] = useState("");
   const [askedQuestion, setAskedQuestion] = useState("");
+  const [answer, setAnswer] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const explanationContent = {
     simple: {
       emoji: "🧒",
       label: "EXPLAINED SIMPLY",
       title: "Here's the story in simple terms",
-      text:
-        "Imagine this is a big conversation happening in the world. Something has changed, and that change could affect people, businesses, or governments. The important part is understanding what changed and why it matters.",
     },
 
     context: {
       emoji: "🎓",
       label: "THE BIGGER PICTURE",
       title: "Here's some context",
-      text:
-        "This story is part of a larger development. Looking at the background helps explain why this is happening now, what led to it, and what the possible consequences could be.",
     },
 
     executive: {
       emoji: "💼",
       label: "EXECUTIVE SUMMARY",
       title: "Here's what matters",
-      text:
-        "The key takeaway is that this development could have broader implications for businesses, markets, governments, and decision-makers. The immediate development is important, but its longer-term consequences are worth watching.",
     },
   };
 
@@ -38,11 +35,74 @@ function Explanation({
     explanationContent[explanationType] ||
     explanationContent.simple;
 
-  const handleAsk = () => {
-    if (!question.trim()) return;
+  const getAudience = () => {
+    if (explanationType === "simple") {
+      return "like I am 5";
+    }
 
-    setAskedQuestion(question);
+    if (explanationType === "executive") {
+      return "C-suite executive";
+    }
+
+    return "A college student";
+  };
+
+  const handleAsk = async () => {
+    if (!question.trim() || loading) return;
+
+    const currentQuestion = question.trim();
+
+    setAskedQuestion(currentQuestion);
     setQuestion("");
+    setAnswer("");
+    setError("");
+    setLoading(true);
+
+    try {
+      const API_URL = import.meta.env.VITE_API_URL;
+
+      const response = await fetch(
+        `${API_URL}/ask-question`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            url: article.link,
+            question: currentQuestion,
+            audience: getAudience(),
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+
+        console.error(
+          "Backend response:",
+          response.status,
+          errorText
+        );
+
+        throw new Error(
+          `Failed to get answer: ${response.status}`
+        );
+      }
+
+      const data = await response.json();
+
+      setAnswer(data.answer);
+
+    } catch (error) {
+      console.error("Error asking AI:", error);
+
+      setError(
+        "I couldn't answer that right now. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -85,7 +145,7 @@ function Explanation({
           </div>
 
           <p>
-            {content.text}
+            Your AI explanation will appear here.
           </p>
 
         </div>
@@ -114,10 +174,14 @@ function Explanation({
                   handleAsk();
                 }
               }}
+              disabled={loading}
             />
 
-            <button onClick={handleAsk}>
-              →
+            <button
+              onClick={handleAsk}
+              disabled={loading || !question.trim()}
+            >
+              {loading ? "..." : "→"}
             </button>
 
           </div>
@@ -132,12 +196,22 @@ function Explanation({
               <div className="mock-answer">
                 <span>✨</span>
 
-                <p>
-                  Great question! Once we connect Newsly
-                  to the AI backend, I'll be able to give
-                  you a personalised answer based on this
-                  article.
-                </p>
+                <div>
+                  {loading ? (
+                    <p>
+                      Newsly is thinking... ✨
+                    </p>
+                  ) : error ? (
+                    <p>
+                      {error}
+                    </p>
+                  ) : (
+                    <p>
+                      {answer}
+                    </p>
+                  )}
+                </div>
+
               </div>
 
             </div>

@@ -1,26 +1,14 @@
-import { useState } from "react";
-
 function ArticleDetail({
   article,
   onBack,
   onExplain,
 }) {
-  const [leaving, setLeaving] = useState(false);
-
   const handleBack = () => {
-    setLeaving(true);
-
-    setTimeout(() => {
-      onBack();
-    }, 350);
+    onBack();
   };
 
   return (
-    <div
-      className={`article-detail-page ${
-        leaving ? "page-leaving" : ""
-      }`}
-    >
+    <div className="article-detail-page">
 
       <button
         className="back-button"
@@ -47,7 +35,16 @@ function ArticleDetail({
         </div>
 
         <div className="article-detail-image">
-          <span>{article.emoji}</span>
+          {article.image ? (
+            <img
+              src={article.image}
+              alt={article.title}
+            />
+          ) : (
+            <span>
+              {article.emoji || "📰"}
+            </span>
+          )}
         </div>
 
         <p className="article-detail-description">
@@ -68,7 +65,7 @@ function ArticleDetail({
 
             <button
               onClick={() =>
-                onExplain("simple")
+                onExplain("like I am 5")
               }
             >
               <span>🧒</span>
@@ -86,7 +83,7 @@ function ArticleDetail({
 
             <button
               onClick={() =>
-                onExplain("context")
+                onExplain("A college student")
               }
             >
               <span>🎓</span>
@@ -104,7 +101,7 @@ function ArticleDetail({
 
             <button
               onClick={() =>
-                onExplain("executive")
+                onExplain("C-suite executive")
               }
             >
               <span>💼</span>
