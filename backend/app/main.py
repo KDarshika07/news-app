@@ -22,7 +22,11 @@ class AudienceLevel(str, Enum):
 
 class URLSummaryRequest(BaseModel):
     url: str
-
+class AskQuestionRequest(BaseModel):
+    url: str
+    question: str
+    audience: AudienceLevel
+  
 class ArticleAnalysis(BaseModel):
     audience: AudienceLevel
     tldr: str
@@ -74,6 +78,56 @@ def summarize_url(request: URLSummaryRequest):
         summary = analyze_article(article_text, user_preferences['explanation_level'])
         return summary
 
+@app.post("/ask-question")
+def ask_question(request: AskQuestionRequest):
+
+    article_text = extract_article(request.url)
+
+    if not article_text:
+        return {
+            "error": "Could not extract article"
+        }
+
+    prompt = f"""
+    You are Newsly, an AI news understanding assistant.
+
+    Answer the user's question based ONLY on the
+    information contained in the article below.
+
+    The answer should be appropriate for:
+    {request.audience.value}
+
+    Do not invent facts.
+    Do not make unsupported claims.
+    If the article does not contain enough information
+    to answer the question, say that clearly.
+
+    User's question:
+    {request.question}
+
+    Article:
+    {article_text}
+
+    Give a clear, conversational answer.
+    """
+
+    from app.services.summariser import client
+
+    response = client.chat.completions.create(
+        model="openrouter/free",
+        messages=[
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ]
+    )
+
+    answer = response.choices[0].message.content
+
+    return {
+        "answer": answer
+    }
 @app.post("/audience_level")
 def audience(request: AudienceLevel):
     return {"audience": request.value}
