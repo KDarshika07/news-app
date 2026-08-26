@@ -1,8 +1,8 @@
 import datetime
 from fastapi import FastAPI
-from services.fetch_news import fetch_news
-from services.summariser import analyze_article, summarize_article
-from services.article_extractor import extract_article
+from app.services.fetch_news import fetch_news
+from app.services.summariser import analyze_article, summarize_article
+from app.services.article_extractor import extract_article
 from pydantic import BaseModel
 from enum import Enum
 from fastapi.middleware.cors import CORSMiddleware
